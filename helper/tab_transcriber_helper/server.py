@@ -15,13 +15,21 @@ from websockets.asyncio.server import ServerConnection, serve
 
 from .asr import SAMPLE_RATE, StreamingASR, load_model
 from .journal import SessionJournal
-from .pcm import decode_float32_pcm
+from .pcm import (
+    SPEAKER_A,
+    SPEAKER_B,
+    SPEAKER_LABELS,
+    decode_float32_pcm,
+    decode_speaker_pcm,
+)
 
 logger = logging.getLogger(__name__)
 
 HOST = "127.0.0.1"
 DEFAULT_PORT = 17341
 TOKEN_FILE_NAME = ".token"
+MODE_SINGLE = "single"
+MODE_AB = "ab"
 
 
 def _token_path() -> Path:
@@ -44,12 +52,21 @@ def generate_or_load_token() -> str:
 
 
 class SessionState:
-    def __init__(self, session_id: str, asr: StreamingASR) -> None:
+    def __init__(self, session_id: str, mode: str, model) -> None:
         self.session_id = session_id
-        self.asr = asr
+        self.mode = mode
         self.journal = SessionJournal(session_id)
         self.active = True
         self.lock = asyncio.Lock()
+        if mode == MODE_AB:
+            self.asr_by_speaker = {
+                SPEAKER_A: StreamingASR(model),
+                SPEAKER_B: StreamingASR(model),
+            }
+            self.asr: StreamingASR | None = None
+        else:
+            self.asr = StreamingASR(model)
+            self.asr_by_speaker = {}
 
 
 class HelperServer:
@@ -129,6 +146,7 @@ class HelperServer:
                                 "type": "ready",
                                 "sessionId": session.session_id,
                                 "journalPath": str(session.journal.path),
+                                "mode": session.mode,
                             }
                         )
                     )
@@ -170,70 +188,98 @@ class HelperServer:
         if sample_rate != SAMPLE_RATE:
             raise ValueError(f"unsupported sampleRate {sample_rate}; expected {SAMPLE_RATE}")
 
-        asr = StreamingASR(self.get_model())
+        mode = str(msg.get("mode") or MODE_SINGLE).lower()
+        if mode not in (MODE_SINGLE, MODE_AB):
+            raise ValueError(f"unsupported mode {mode}; expected {MODE_SINGLE} or {MODE_AB}")
+
+        model = self.get_model()
 
         if session_id in self._sessions:
             # Resume: reuse journal for same session id
             existing = self._sessions[session_id]
             existing.active = True
-            existing.asr = asr
+            existing.mode = mode
+            if mode == MODE_AB:
+                existing.asr_by_speaker = {
+                    SPEAKER_A: StreamingASR(model),
+                    SPEAKER_B: StreamingASR(model),
+                }
+                existing.asr = None
+            else:
+                existing.asr = StreamingASR(model)
+                existing.asr_by_speaker = {}
             return existing
 
         active = [s for s in self._sessions.values() if s.active]
         if active:
             raise ValueError("another transcription session is already active")
 
-        state = SessionState(session_id, asr)
+        state = SessionState(session_id, mode, model)
         self._sessions[session_id] = state
         return state
+
+    async def _emit_segments(
+        self,
+        websocket: ServerConnection,
+        session: SessionState,
+        segments,
+        speaker: str = "",
+    ) -> None:
+        for seg in segments:
+            if seg.text:
+                line = session.journal.append(seg.text, speaker=speaker, t0=seg.t0, t1=seg.t1)
+                payload: dict = {
+                    "type": "segment",
+                    "text": line,
+                    "t0": seg.t0,
+                    "t1": seg.t1,
+                }
+                if speaker:
+                    payload["speaker"] = speaker
+                await websocket.send(json.dumps(payload))
+            lagging = seg.rtf > 1.05
+            await websocket.send(
+                json.dumps({"type": "status", "rtf": round(seg.rtf, 3), "lagging": lagging})
+            )
 
     async def _handle_audio(
         self, websocket: ServerConnection, session: SessionState, data: bytes
     ) -> None:
         try:
-            pcm = decode_float32_pcm(data)
+            if session.mode == MODE_AB:
+                speaker_id, pcm = decode_speaker_pcm(data)
+                speaker = SPEAKER_LABELS[speaker_id]
+                asr = session.asr_by_speaker[speaker_id]
+            else:
+                pcm = decode_float32_pcm(data)
+                speaker = ""
+                asr = session.asr
+                assert asr is not None
         except ValueError as exc:
             await websocket.send(json.dumps({"type": "error", "message": str(exc)}))
             return
 
         async with session.lock:
             # Offload blocking whisper to a thread
-            segments = await asyncio.to_thread(session.asr.append_pcm, pcm)
+            segments = await asyncio.to_thread(asr.append_pcm, pcm)
 
-        for seg in segments:
-            if seg.text:
-                session.journal.append(seg.text)
-                await websocket.send(
-                    json.dumps(
-                        {
-                            "type": "segment",
-                            "text": seg.text,
-                            "t0": seg.t0,
-                            "t1": seg.t1,
-                        }
-                    )
-                )
-            lagging = seg.rtf > 1.05
-            await websocket.send(
-                json.dumps({"type": "status", "rtf": round(seg.rtf, 3), "lagging": lagging})
-            )
+        await self._emit_segments(websocket, session, segments, speaker=speaker)
 
     async def _stop_session(self, websocket: ServerConnection, session: SessionState) -> str:
         async with session.lock:
-            segments = await asyncio.to_thread(session.asr.flush)
-        for seg in segments:
-            if seg.text:
-                session.journal.append(seg.text)
-                await websocket.send(
-                    json.dumps(
-                        {
-                            "type": "segment",
-                            "text": seg.text,
-                            "t0": seg.t0,
-                            "t1": seg.t1,
-                        }
-                    )
-                )
+            if session.mode == MODE_AB:
+                flushed: list[tuple[str, list]] = []
+                for speaker_id, asr in session.asr_by_speaker.items():
+                    segments = await asyncio.to_thread(asr.flush)
+                    flushed.append((SPEAKER_LABELS[speaker_id], segments))
+            else:
+                assert session.asr is not None
+                segments = await asyncio.to_thread(session.asr.flush)
+                flushed = [("", segments)]
+
+        for speaker, segments in flushed:
+            await self._emit_segments(websocket, session, segments, speaker=speaker)
+
         session.active = False
         text = session.journal.full_text()
         # Retain journal by default for crash recovery window

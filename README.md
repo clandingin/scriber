@@ -1,13 +1,13 @@
 # Tab Transcriber
 
-Lightweight, **local-only** Chrome extension that captures audio from the active browser tab **and your microphone**, streams it to a small **faster-whisper** helper on `127.0.0.1`, and exports a `.txt` transcript. Designed for **hour-long** video calls via chunked PCM + VAD windows — audio and transcripts never leave the machine.
+Lightweight, **local-only** Chrome extension that captures audio from the active browser tab **and your microphone**, streams each to a small **faster-whisper** helper on `127.0.0.1`, and exports a `.txt` transcript labeled **`A:`** (your mic) and **`B:`** (browser/tab audio). Designed for **hour-long** video calls via chunked PCM + VAD windows — audio and transcripts never leave the machine.
 
 > **HIPAA note:** This software implements technical controls suited to local PHI processing (loopback-only helper, token auth, no cloud STT, minimal permissions). It does **not** by itself constitute a HIPAA compliance program. Covered entities still need organizational policies, BAAs where applicable, workstation hardening, and workforce training.
 
 ## Architecture
 
-1. **Extension (MV3)** — `tabCapture` + microphone via offscreen document; mixes both for transcription, keeps tab audio audible (mic is not played back), resamples to 16 kHz, and streams ~1.5 s PCM chunks over WebSocket.
-2. **Helper (Python)** — `faster-whisper` (CTranslate2) with Silero VAD, ~28 s rolling windows, incremental segments, append-only session journal.
+1. **Extension (MV3)** — `tabCapture` + microphone via offscreen document; keeps streams **separate** (A = mic, B = tab), keeps tab audio audible (mic is not played back), resamples to 16 kHz, and streams ~1.5 s labeled PCM chunks over WebSocket.
+2. **Helper (Python)** — `faster-whisper` (CTranslate2) with Silero VAD, dual rolling windows, incremental `A:` / `B:` segments, append-only session journal.
 
 ## Quick start
 
@@ -40,7 +40,11 @@ npm run build
 1. Open a Meet / Zoom-in-browser / YouTube tab (anything with tab audio)
 2. Click **Start** — allow **microphone** when Chrome prompts (needed for your own voice; tabCapture alone only hears the other side)
 3. Tab audio should remain audible; speak into your mic as well
-4. Transcript grows live as segments finalize (~30 s windows)
+4. Transcript grows live as segments finalize (~30 s windows), formatted like:
+   ```
+   A: my side of the conversation
+   B: what played in the browser tab
+   ```
 5. Click **Stop**, then **Download .txt**
 
 ## Project layout

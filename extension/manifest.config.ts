@@ -7,7 +7,7 @@ export default defineManifest({
   name: "Tab Transcriber",
   description:
     "HIPAA-oriented local tab + microphone transcription via a localhost faster-whisper helper. Audio never leaves this machine.",
-  version: "0.1.1",
+  version: "0.1.2",
   action: {
     default_title: "Tab Transcriber",
     default_popup: "src/popup/index.html",

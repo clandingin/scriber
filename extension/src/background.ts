@@ -173,8 +173,13 @@ function handleOffscreen(message: OffscreenToBg): void {
     case "OFFSCREEN_SEGMENT": {
       const segments = [
         ...state.segments,
-        { text: message.text, t0: message.t0, t1: message.t1 },
-      ];
+        {
+          text: message.text,
+          t0: message.t0,
+          t1: message.t1,
+          speaker: message.speaker,
+        },
+      ].sort((a, b) => a.t0 - b.t0 || (a.speaker ?? "").localeCompare(b.speaker ?? ""));
       const transcript = segments.map((s) => s.text).join("\n");
       setState({ segments, transcript });
       break;

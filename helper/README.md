@@ -1,6 +1,6 @@
 # Tab Transcriber Helper
 
-Local **faster-whisper** WebSocket service bound to `127.0.0.1` only. The Chrome extension streams 16 kHz PCM here; nothing is uploaded.
+Local **faster-whisper** WebSocket service bound to `127.0.0.1` only. The Chrome extension streams 16 kHz PCM here (dual-channel mode: **A** = mic, **B** = tab); nothing is uploaded.
 
 ## Setup (Windows)
 

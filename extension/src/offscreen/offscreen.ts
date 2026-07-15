@@ -1,19 +1,21 @@
-import { HelperClient } from "../lib/helperClient";
+import { HelperClient, type SpeakerId } from "../lib/helperClient";
 import type { BgToOffscreen, OffscreenToBg } from "../lib/messages";
 import { PcmChunker, resampleTo16k, TARGET_SAMPLE_RATE } from "../lib/pcm";
 
 let tabStream: MediaStream | null = null;
 let micStream: MediaStream | null = null;
 let audioContext: AudioContext | null = null;
-let workletNode: AudioWorkletNode | null = null;
+let tabWorklet: AudioWorkletNode | null = null;
+let micWorklet: AudioWorkletNode | null = null;
 let tabSource: MediaStreamAudioSourceNode | null = null;
 let micSource: MediaStreamAudioSourceNode | null = null;
-let mixer: GainNode | null = null;
 let silentGain: GainNode | null = null;
 let helper: HelperClient | null = null;
-let chunker: PcmChunker | null = null;
+let micChunker: PcmChunker | null = null;
+let tabChunker: PcmChunker | null = null;
 let lagging = false;
-let scriptNode: ScriptProcessorNode | null = null;
+let tabScriptNode: ScriptProcessorNode | null = null;
+let micScriptNode: ScriptProcessorNode | null = null;
 let doneWaiter: { resolve: (text: string) => void; reject: (err: Error) => void } | null =
   null;
 
@@ -44,12 +46,32 @@ async function openMicrophone(): Promise<MediaStream> {
   }
 }
 
+function makePcmHandler(speaker: SpeakerId, chunker: () => PcmChunker | null, sourceRate: number) {
+  return (input: Float32Array) => {
+    const activeChunker = chunker();
+    if (!helper || !activeChunker) return;
+    if (lagging) {
+      let energy = 0;
+      const step = 64;
+      for (let i = 0; i < input.length; i += step) energy += Math.abs(input[i]);
+      if (energy / Math.max(1, input.length / step) < 0.01) {
+        return;
+      }
+    }
+    const resampled = resampleTo16k(input, sourceRate);
+    for (const piece of activeChunker.push(resampled)) {
+      helper.sendPcm(piece, speaker);
+    }
+  };
+}
+
 async function startCapture(msg: Extract<BgToOffscreen, { type: "OFFSCREEN_START" }>): Promise<void> {
   await stopCaptureInternal(false);
 
   helper = new HelperClient({
     onReady: (sessionId) => post({ type: "OFFSCREEN_READY", sessionId }),
-    onSegment: (text, t0, t1) => post({ type: "OFFSCREEN_SEGMENT", text, t0, t1 }),
+    onSegment: (text, t0, t1, speaker) =>
+      post({ type: "OFFSCREEN_SEGMENT", text, t0, t1, speaker }),
     onStatus: (rtf, isLagging) => {
       lagging = isLagging;
       post({ type: "OFFSCREEN_STATUS", rtf, lagging: isLagging });
@@ -75,7 +97,7 @@ async function startCapture(msg: Extract<BgToOffscreen, { type: "OFFSCREEN_START
   });
 
   await helper.connect(msg.token, msg.sessionId);
-  helper.startSession(msg.sessionId, TARGET_SAMPLE_RATE);
+  helper.startSession(msg.sessionId, TARGET_SAMPLE_RATE, "ab");
 
   tabStream = await navigator.mediaDevices.getUserMedia({
     audio: {
@@ -88,65 +110,64 @@ async function startCapture(msg: Extract<BgToOffscreen, { type: "OFFSCREEN_START
     video: false,
   });
 
-  // Own voice is not present in tabCapture; mix mic + tab for both sides of a call.
   micStream = await openMicrophone();
 
   audioContext = new AudioContext();
   tabSource = audioContext.createMediaStreamSource(tabStream);
   micSource = audioContext.createMediaStreamSource(micStream);
 
-  mixer = audioContext.createGain();
-  mixer.gain.value = 1;
-  tabSource.connect(mixer);
-  micSource.connect(mixer);
-
   // Keep tab audible — tabCapture otherwise mutes the tab.
   // Do NOT route mic to speakers (would create feedback / echo).
   tabSource.connect(audioContext.destination);
 
-  chunker = new PcmChunker();
+  micChunker = new PcmChunker();
+  tabChunker = new PcmChunker();
   const sourceRate = audioContext.sampleRate;
-
-  const onPcm = (input: Float32Array) => {
-    if (!helper || !chunker) return;
-    if (lagging) {
-      let energy = 0;
-      const step = 64;
-      for (let i = 0; i < input.length; i += step) energy += Math.abs(input[i]);
-      if (energy / Math.max(1, input.length / step) < 0.01) {
-        return;
-      }
-    }
-    const resampled = resampleTo16k(input, sourceRate);
-    for (const piece of chunker.push(resampled)) {
-      helper.sendPcm(piece);
-    }
-  };
+  const onMicPcm = makePcmHandler("A", () => micChunker, sourceRate);
+  const onTabPcm = makePcmHandler("B", () => tabChunker, sourceRate);
 
   try {
     const workletUrl = chrome.runtime.getURL("pcm-processor.js");
     await audioContext.audioWorklet.addModule(workletUrl);
-    workletNode = new AudioWorkletNode(audioContext, "pcm-capture-processor");
-    workletNode.port.onmessage = (ev: MessageEvent<Float32Array>) => onPcm(ev.data);
-    mixer.connect(workletNode);
+
+    micWorklet = new AudioWorkletNode(audioContext, "pcm-capture-processor");
+    micWorklet.port.onmessage = (ev: MessageEvent<Float32Array>) => onMicPcm(ev.data);
+    micSource.connect(micWorklet);
+
+    tabWorklet = new AudioWorkletNode(audioContext, "pcm-capture-processor");
+    tabWorklet.port.onmessage = (ev: MessageEvent<Float32Array>) => onTabPcm(ev.data);
+    tabSource.connect(tabWorklet);
   } catch {
-    scriptNode = audioContext.createScriptProcessor(4096, 1, 1);
-    scriptNode.onaudioprocess = (ev) => {
-      const input = ev.inputBuffer.getChannelData(0);
-      onPcm(new Float32Array(input));
-    };
     silentGain = audioContext.createGain();
     silentGain.gain.value = 0;
-    mixer.connect(scriptNode);
-    scriptNode.connect(silentGain);
     silentGain.connect(audioContext.destination);
+
+    micScriptNode = audioContext.createScriptProcessor(4096, 1, 1);
+    micScriptNode.onaudioprocess = (ev) => {
+      onMicPcm(new Float32Array(ev.inputBuffer.getChannelData(0)));
+    };
+    micSource.connect(micScriptNode);
+    micScriptNode.connect(silentGain);
+
+    tabScriptNode = audioContext.createScriptProcessor(4096, 1, 1);
+    tabScriptNode.onaudioprocess = (ev) => {
+      onTabPcm(new Float32Array(ev.inputBuffer.getChannelData(0)));
+    };
+    tabSource.connect(tabScriptNode);
+    tabScriptNode.connect(silentGain);
   }
 }
 
 async function stopCaptureInternal(notifyHelper: boolean): Promise<void> {
-  if (chunker && helper) {
-    const rest = chunker.flush();
-    if (rest) helper.sendPcm(rest);
+  if (helper) {
+    if (micChunker) {
+      const rest = micChunker.flush();
+      if (rest) helper.sendPcm(rest, "A");
+    }
+    if (tabChunker) {
+      const rest = tabChunker.flush();
+      if (rest) helper.sendPcm(rest, "B");
+    }
   }
 
   if (notifyHelper && helper?.connected) {
@@ -166,17 +187,19 @@ async function stopCaptureInternal(notifyHelper: boolean): Promise<void> {
     }
   }
 
-  workletNode?.port.close();
-  workletNode?.disconnect();
-  workletNode = null;
+  micWorklet?.port.close();
+  micWorklet?.disconnect();
+  micWorklet = null;
+  tabWorklet?.port.close();
+  tabWorklet?.disconnect();
+  tabWorklet = null;
 
-  scriptNode?.disconnect();
-  scriptNode = null;
+  micScriptNode?.disconnect();
+  micScriptNode = null;
+  tabScriptNode?.disconnect();
+  tabScriptNode = null;
   silentGain?.disconnect();
   silentGain = null;
-
-  mixer?.disconnect();
-  mixer = null;
 
   micSource?.disconnect();
   micSource = null;
@@ -193,8 +216,10 @@ async function stopCaptureInternal(notifyHelper: boolean): Promise<void> {
     audioContext = null;
   }
 
-  chunker?.clear();
-  chunker = null;
+  micChunker?.clear();
+  micChunker = null;
+  tabChunker?.clear();
+  tabChunker = null;
 
   helper?.close();
   helper = null;
