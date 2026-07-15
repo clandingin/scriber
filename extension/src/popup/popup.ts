@@ -115,10 +115,35 @@ function downloadTranscript(): void {
   URL.revokeObjectURL(url);
 }
 
-startBtn.addEventListener("click", () => {
-  void send({ type: "START" }).then((res) => {
-    if (res.type === "STATE") applyState(res.state);
+/**
+ * Offscreen documents cannot show Chrome's mic permission prompt.
+ * Request (or re-confirm) permission from the popup first so Start can open the mic.
+ */
+async function ensureMicrophonePermission(): Promise<void> {
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+    },
+    video: false,
   });
+  for (const track of stream.getTracks()) track.stop();
+}
+
+startBtn.addEventListener("click", () => {
+  void (async () => {
+    try {
+      await ensureMicrophonePermission();
+    } catch (err: unknown) {
+      const detail = err instanceof Error ? err.message : String(err);
+      errorEl.hidden = false;
+      errorEl.textContent = `Microphone permission required to transcribe your voice. Allow access, then press Start again. (${detail})`;
+      return;
+    }
+    const res = await send({ type: "START" });
+    if (res.type === "STATE") applyState(res.state);
+  })();
 });
 
 stopBtn.addEventListener("click", () => {

@@ -54,7 +54,8 @@ async function ensureOffscreen(): Promise<void> {
     await chrome.offscreen.createDocument({
       url: "src/offscreen/index.html",
       reasons: [chrome.offscreen.Reason.USER_MEDIA],
-      justification: "Capture tab audio via chrome.tabCapture for local transcription",
+      justification:
+        "Capture tab audio and microphone for local transcription of both sides of a call",
     });
     await booted;
     return;
@@ -172,8 +173,13 @@ function handleOffscreen(message: OffscreenToBg): void {
     case "OFFSCREEN_SEGMENT": {
       const segments = [
         ...state.segments,
-        { text: message.text, t0: message.t0, t1: message.t1 },
-      ];
+        {
+          text: message.text,
+          t0: message.t0,
+          t1: message.t1,
+          speaker: message.speaker,
+        },
+      ].sort((a, b) => a.t0 - b.t0 || (a.speaker ?? "").localeCompare(b.speaker ?? ""));
       const transcript = segments.map((s) => s.text).join("\n");
       setState({ segments, transcript });
       break;

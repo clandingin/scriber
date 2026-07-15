@@ -10,6 +10,8 @@ export interface TranscriptSegment {
   text: string;
   t0: number;
   t1: number;
+  /** A = own mic, B = browser/tab audio */
+  speaker?: "A" | "B";
 }
 
 export interface SessionState {
@@ -65,7 +67,13 @@ export type BgToOffscreen =
 export type OffscreenToBg =
   | { type: "OFFSCREEN_BOOTED" }
   | { type: "OFFSCREEN_READY"; sessionId: string }
-  | { type: "OFFSCREEN_SEGMENT"; text: string; t0: number; t1: number }
+  | {
+      type: "OFFSCREEN_SEGMENT";
+      text: string;
+      t0: number;
+      t1: number;
+      speaker?: "A" | "B";
+    }
   | { type: "OFFSCREEN_STATUS"; rtf: number; lagging: boolean }
   | { type: "OFFSCREEN_DONE"; text: string }
   | { type: "OFFSCREEN_ERROR"; message: string }

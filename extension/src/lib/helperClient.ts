@@ -1,13 +1,17 @@
 import { HELPER_WS_BASE } from "./messages";
 
+export type SpeakerId = "A" | "B";
+
 export type HelperClientEvents = {
   onReady?: (sessionId: string, journalPath?: string) => void;
-  onSegment?: (text: string, t0: number, t1: number) => void;
+  onSegment?: (text: string, t0: number, t1: number, speaker?: SpeakerId) => void;
   onStatus?: (rtf: number, lagging: boolean) => void;
   onDone?: (text: string) => void;
   onError?: (message: string) => void;
   onClose?: () => void;
 };
+
+const SPEAKER_BYTE: Record<SpeakerId, number> = { A: 0, B: 1 };
 
 /**
  * WebSocket client for the local faster-whisper helper (127.0.0.1 only).
@@ -69,21 +73,33 @@ export class HelperClient {
     });
   }
 
-  startSession(sessionId: string, sampleRate = 16000): void {
-    this.sendJson({ type: "start", sessionId, sampleRate });
+  startSession(sessionId: string, sampleRate = 16000, mode: "single" | "ab" = "ab"): void {
+    this.sendJson({ type: "start", sessionId, sampleRate, mode });
   }
 
   stopSession(): void {
     this.sendJson({ type: "stop" });
   }
 
-  /** Send float32 PCM little-endian samples. */
-  sendPcm(samples: Float32Array): void {
+  /**
+   * Send float32 PCM little-endian samples.
+   * In mode "ab", frames are prefixed with a uint32 LE speaker id (0=A mic, 1=B tab).
+   */
+  sendPcm(samples: Float32Array, speaker?: SpeakerId): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-    // Copy into a plain ArrayBuffer view for WebSocket
     const copy = new Float32Array(samples.length);
     copy.set(samples);
-    this.ws.send(copy.buffer);
+
+    if (!speaker) {
+      this.ws.send(copy.buffer);
+      return;
+    }
+
+    const frame = new ArrayBuffer(4 + copy.byteLength);
+    const view = new DataView(frame);
+    view.setUint32(0, SPEAKER_BYTE[speaker], true);
+    new Uint8Array(frame, 4).set(new Uint8Array(copy.buffer));
+    this.ws.send(frame);
   }
 
   close(): void {
@@ -133,10 +149,14 @@ export class HelperClient {
       return;
     }
     if (type === "segment") {
+      const rawSpeaker = msg.speaker;
+      const speaker =
+        rawSpeaker === "A" || rawSpeaker === "B" ? (rawSpeaker as SpeakerId) : undefined;
       this.events.onSegment?.(
         String(msg.text ?? ""),
         Number(msg.t0 ?? 0),
         Number(msg.t1 ?? 0),
+        speaker,
       );
       return;
     }
