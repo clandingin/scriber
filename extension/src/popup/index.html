@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tab Transcriber</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="header">
+        <h1>Tab Transcriber</h1>
+        <p class="tagline">Local-only tab audio → text</p>
+      </header>
+
+      <section class="status-row" aria-live="polite">
+        <span id="statusBadge" class="badge">Checking…</span>
+        <span id="elapsed" class="elapsed"></span>
+      </section>
+
+      <p id="tabTitle" class="tab-title"></p>
+      <p id="error" class="error" hidden></p>
+
+      <section class="controls">
+        <button id="startBtn" type="button" class="btn primary">Start</button>
+        <button id="stopBtn" type="button" class="btn" disabled>Stop</button>
+        <button id="downloadBtn" type="button" class="btn" disabled>Download .txt</button>
+      </section>
+
+      <section class="meta">
+        <span id="rtf"></span>
+        <span id="lag"></span>
+      </section>
+
+      <label class="transcript-label" for="transcript">Transcript</label>
+      <textarea id="transcript" class="transcript" readonly rows="12" placeholder="Transcript will appear here as speech is recognized…"></textarea>
+
+      <details class="settings">
+        <summary>Helper settings</summary>
+        <p class="hint">
+          Run <code>helper\scripts\start-helper.bat</code>, then paste the token from
+          <code>helper\.token</code>. The helper binds to <code>127.0.0.1</code> only.
+        </p>
+        <label for="tokenInput">Helper token</label>
+        <input id="tokenInput" type="password" autocomplete="off" spellcheck="false" />
+        <div class="settings-actions">
+          <button id="saveTokenBtn" type="button" class="btn">Save token</button>
+          <button id="checkHelperBtn" type="button" class="btn">Check helper</button>
+          <button id="clearBtn" type="button" class="btn">Clear transcript</button>
+        </div>
+      </details>
+    </main>
+    <script type="module" src="./popup.ts"></script>
+  </body>
+</html>
