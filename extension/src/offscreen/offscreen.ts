@@ -2,10 +2,13 @@ import { HelperClient } from "../lib/helperClient";
 import type { BgToOffscreen, OffscreenToBg } from "../lib/messages";
 import { PcmChunker, resampleTo16k, TARGET_SAMPLE_RATE } from "../lib/pcm";
 
-let mediaStream: MediaStream | null = null;
+let tabStream: MediaStream | null = null;
+let micStream: MediaStream | null = null;
 let audioContext: AudioContext | null = null;
 let workletNode: AudioWorkletNode | null = null;
-let sourceNode: MediaStreamAudioSourceNode | null = null;
+let tabSource: MediaStreamAudioSourceNode | null = null;
+let micSource: MediaStreamAudioSourceNode | null = null;
+let mixer: GainNode | null = null;
 let silentGain: GainNode | null = null;
 let helper: HelperClient | null = null;
 let chunker: PcmChunker | null = null;
@@ -16,6 +19,29 @@ let doneWaiter: { resolve: (text: string) => void; reject: (err: Error) => void 
 
 function post(msg: OffscreenToBg): void {
   chrome.runtime.sendMessage(msg);
+}
+
+function stopTracks(stream: MediaStream | null): void {
+  if (!stream) return;
+  for (const track of stream.getTracks()) track.stop();
+}
+
+async function openMicrophone(): Promise<MediaStream> {
+  try {
+    return await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+      video: false,
+    });
+  } catch (err: unknown) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `Microphone access failed (${detail}). Allow microphone permission for Tab Transcriber, then press Start again.`,
+    );
+  }
 }
 
 async function startCapture(msg: Extract<BgToOffscreen, { type: "OFFSCREEN_START" }>): Promise<void> {
@@ -51,7 +77,7 @@ async function startCapture(msg: Extract<BgToOffscreen, { type: "OFFSCREEN_START
   await helper.connect(msg.token, msg.sessionId);
   helper.startSession(msg.sessionId, TARGET_SAMPLE_RATE);
 
-  mediaStream = await navigator.mediaDevices.getUserMedia({
+  tabStream = await navigator.mediaDevices.getUserMedia({
     audio: {
       // Chrome extension tab capture constraints
       mandatory: {
@@ -62,10 +88,21 @@ async function startCapture(msg: Extract<BgToOffscreen, { type: "OFFSCREEN_START
     video: false,
   });
 
+  // Own voice is not present in tabCapture; mix mic + tab for both sides of a call.
+  micStream = await openMicrophone();
+
   audioContext = new AudioContext();
-  sourceNode = audioContext.createMediaStreamSource(mediaStream);
-  // Keep tab audible — tabCapture otherwise mutes the tab
-  sourceNode.connect(audioContext.destination);
+  tabSource = audioContext.createMediaStreamSource(tabStream);
+  micSource = audioContext.createMediaStreamSource(micStream);
+
+  mixer = audioContext.createGain();
+  mixer.gain.value = 1;
+  tabSource.connect(mixer);
+  micSource.connect(mixer);
+
+  // Keep tab audible — tabCapture otherwise mutes the tab.
+  // Do NOT route mic to speakers (would create feedback / echo).
+  tabSource.connect(audioContext.destination);
 
   chunker = new PcmChunker();
   const sourceRate = audioContext.sampleRate;
@@ -91,7 +128,7 @@ async function startCapture(msg: Extract<BgToOffscreen, { type: "OFFSCREEN_START
     await audioContext.audioWorklet.addModule(workletUrl);
     workletNode = new AudioWorkletNode(audioContext, "pcm-capture-processor");
     workletNode.port.onmessage = (ev: MessageEvent<Float32Array>) => onPcm(ev.data);
-    sourceNode.connect(workletNode);
+    mixer.connect(workletNode);
   } catch {
     scriptNode = audioContext.createScriptProcessor(4096, 1, 1);
     scriptNode.onaudioprocess = (ev) => {
@@ -100,7 +137,7 @@ async function startCapture(msg: Extract<BgToOffscreen, { type: "OFFSCREEN_START
     };
     silentGain = audioContext.createGain();
     silentGain.gain.value = 0;
-    sourceNode.connect(scriptNode);
+    mixer.connect(scriptNode);
     scriptNode.connect(silentGain);
     silentGain.connect(audioContext.destination);
   }
@@ -138,13 +175,18 @@ async function stopCaptureInternal(notifyHelper: boolean): Promise<void> {
   silentGain?.disconnect();
   silentGain = null;
 
-  sourceNode?.disconnect();
-  sourceNode = null;
+  mixer?.disconnect();
+  mixer = null;
 
-  if (mediaStream) {
-    for (const track of mediaStream.getTracks()) track.stop();
-    mediaStream = null;
-  }
+  micSource?.disconnect();
+  micSource = null;
+  tabSource?.disconnect();
+  tabSource = null;
+
+  stopTracks(micStream);
+  micStream = null;
+  stopTracks(tabStream);
+  tabStream = null;
 
   if (audioContext) {
     await audioContext.close().catch(() => undefined);

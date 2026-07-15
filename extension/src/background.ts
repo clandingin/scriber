@@ -54,7 +54,8 @@ async function ensureOffscreen(): Promise<void> {
     await chrome.offscreen.createDocument({
       url: "src/offscreen/index.html",
       reasons: [chrome.offscreen.Reason.USER_MEDIA],
-      justification: "Capture tab audio via chrome.tabCapture for local transcription",
+      justification:
+        "Capture tab audio and microphone for local transcription of both sides of a call",
     });
     await booted;
     return;

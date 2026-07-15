@@ -6,8 +6,8 @@ export default defineManifest({
   manifest_version: 3,
   name: "Tab Transcriber",
   description:
-    "HIPAA-oriented local tab audio transcription via a localhost faster-whisper helper. Audio never leaves this machine.",
-  version: "0.1.0",
+    "HIPAA-oriented local tab + microphone transcription via a localhost faster-whisper helper. Audio never leaves this machine.",
+  version: "0.1.1",
   action: {
     default_title: "Tab Transcriber",
     default_popup: "src/popup/index.html",
@@ -16,7 +16,7 @@ export default defineManifest({
     service_worker: "src/background.ts",
     type: "module",
   },
-  permissions: ["tabCapture", "offscreen", "storage", "activeTab"],
+  permissions: ["tabCapture", "offscreen", "storage", "activeTab", "audioCapture"],
   host_permissions: [`${HELPER_ORIGIN}/*`, "ws://127.0.0.1:17341/*"],
   content_security_policy: {
     extension_pages:
