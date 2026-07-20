@@ -15,6 +15,7 @@ from websockets.asyncio.server import ServerConnection, serve
 
 from .asr import SAMPLE_RATE, StreamingASR, load_model
 from .journal import SessionJournal
+from .note_bridge import resolve_note_report
 from .pcm import (
     SPEAKER_A,
     SPEAKER_B,
@@ -132,6 +133,34 @@ class HelperServer:
                 mtype = msg.get("type")
                 if mtype == "ping":
                     await websocket.send(json.dumps({"type": "pong"}))
+                    continue
+
+                if mtype == "resolve_note":
+                    transcript = str(msg.get("transcript") or "")
+                    diagnosis = str(msg.get("diagnosis") or "")
+                    enable_embeddings = bool(msg.get("enableEmbeddings", False))
+                    try:
+                        report = await asyncio.to_thread(
+                            resolve_note_report,
+                            transcript,
+                            diagnosis,
+                            enable_embeddings=enable_embeddings,
+                        )
+                    except Exception as exc:  # noqa: BLE001
+                        logger.exception("resolve_note failed")
+                        await websocket.send(
+                            json.dumps({"type": "error", "message": str(exc)})
+                        )
+                        continue
+                    await websocket.send(
+                        json.dumps(
+                            {
+                                "type": "note_resolved",
+                                "report": report,
+                                "diagnosis": diagnosis,
+                            }
+                        )
+                    )
                     continue
 
                 if mtype == "start":

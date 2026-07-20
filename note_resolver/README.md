@@ -34,12 +34,14 @@ On first embedding run, `sentence-transformers` may download **model weights onl
 ## Pipeline stages (swappable modules)
 
 1. `pipeline/parser.py` — turns → `(speaker, index, text)`
-2. `pipeline/indexer.py` — topical spans + MiniLM embeddings
+2. `pipeline/indexer.py` — topical A→B spans + MiniLM embeddings
 3. `pipeline/matcher.py` — keyword then semantic mention match + polarity
 4. `pipeline/radio3.py` — Endorses / Denies / Not selected + citation
 5. `pipeline/multi_tag.py` — per-tag checkboxes; default/WNL if none match
 6. `pipeline/rollup.py` — derived checkboxes from child results
 7. `pipeline/assembler.py` — structured payload + plain-text form dump
+
+Orchestration: `runner.py` (`run_pipeline`).
 
 ## Config
 
@@ -50,9 +52,18 @@ Edit `note_resolver/config/fields.json` to add/change fields. Each field has
 Sections included in this pass: Substance Use, History of Harm, Risk Assessment,
 Mental Status Exam.
 
-## Output
+## Chrome extension
 
-A text report listing each resolved checkbox with citations, e.g.:
+The Tab Transcriber popup can open a **Note checkboxes** panel and call the
+local helper (`resolve_note` WebSocket message). Keep `helper/` and
+`note_resolver/` side by side in the repo (or `pip install -e note_resolver`
+into the helper venv) so the helper can import the pipeline.
+
+1. Start the helper as usual
+2. Capture / load an A:/B: transcript in the extension
+3. Click **Note checkboxes** → enter diagnosis → **Resolve checkboxes**
+4. The text form dump appears in the extension UI
+
 
 ```
 [   Denies    ]  Alcohol

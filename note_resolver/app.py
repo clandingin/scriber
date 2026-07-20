@@ -35,9 +35,9 @@ A: Any thoughts of harming others or violent behavior?
 B: No, never.
 A: How is your attention and memory?
 B: Attention is okay, memory is fine.
-A: Mood and affect today look congruent; thought process linear?
-B: Yeah I feel sad but I'm thinking clearly, no voices or delusions.
-A: Do you feel supported by family?
+A: Mood and affect today — thought process linear? Any voices or delusions?
+B: I feel sad but I'm thinking clearly, no voices or delusions.
+A: Do you feel supported by family? Engaged in treatment?
 B: Yes, my family is very supportive and I'm engaged in treatment.
 """
 
@@ -46,56 +46,63 @@ def main() -> None:
     st.set_page_config(page_title="Note Checkbox Resolver", layout="wide")
     st.title("Clinical note checkbox resolver")
     st.caption(
-        "Local pipeline (keyword + MiniLM). Resolves RADIO3 / MULTI_TAG / ROLLUP "
+        "Local pipeline (keyword + optional MiniLM). Resolves RADIO3 / MULTI_TAG / ROLLUP "
         "fields only — free-text and C-SSRS are out of scope."
     )
+
+    if "transcript" not in st.session_state:
+        st.session_state["transcript"] = SAMPLE_TRANSCRIPT
+    if "diagnosis" not in st.session_state:
+        st.session_state["diagnosis"] = (
+            "F32.1 — Major depressive disorder, single episode, moderate"
+        )
 
     col_l, col_r = st.columns(2)
 
     with col_l:
-        st.subheader("Transcript (A: doctor / B: patient)")
-        uploaded = st.file_uploader(
-            "Upload transcript .txt",
-            type=["txt"],
-            help="Optional. Uploading fills the transcript box below.",
-        )
-        if uploaded is not None:
-            text = uploaded.read().decode("utf-8", errors="replace")
-            st.session_state["transcript"] = text
+        st.subheader("1. Transcript (A: doctor / B: patient)")
+        uploaded = st.file_uploader("Upload transcript .txt", type=["txt"])
+        if st.button("Load uploaded .txt into transcript box", type="secondary"):
+            if uploaded is None:
+                st.warning("Choose a .txt file first.")
+            else:
+                st.session_state["transcript"] = uploaded.read().decode(
+                    "utf-8", errors="replace"
+                )
+                st.success("Transcript loaded from file.")
 
         transcript = st.text_area(
-            "Paste transcript",
-            value=st.session_state.get("transcript", SAMPLE_TRANSCRIPT),
+            "Or paste transcript here",
+            value=st.session_state["transcript"],
             height=420,
-            key="transcript_area",
         )
-
-        if st.button("Load uploaded / pasted transcript into resolver", type="secondary"):
-            st.session_state["transcript"] = transcript
-            st.success(f"Transcript ready ({len(transcript.splitlines())} lines).")
+        st.session_state["transcript"] = transcript
 
     with col_r:
-        st.subheader("Diagnosis")
+        st.subheader("2. Diagnosis")
         diagnosis = st.text_area(
             "Diagnosis code + label",
-            value=st.session_state.get("diagnosis", "F32.1 — Major depressive disorder, single episode, moderate"),
+            value=st.session_state["diagnosis"],
             height=100,
-            key="diagnosis_area",
         )
+        st.session_state["diagnosis"] = diagnosis
+
         use_embeddings = st.checkbox(
-            "Use local sentence-transformer embeddings (fallback if unavailable)",
+            "Use local sentence-transformer embeddings (falls back to keywords)",
             value=True,
         )
+
+        st.subheader("3. Resolve")
         run = st.button("Resolve checkboxes", type="primary")
 
     if run:
         with st.spinner("Running local pipeline…"):
             _note, report = run_pipeline(
-                transcript,
-                diagnosis,
+                st.session_state["transcript"],
+                st.session_state["diagnosis"],
                 enable_embeddings=use_embeddings,
             )
-        st.subheader("Form answers (text)")
+        st.subheader("Form answers (text representation)")
         st.text_area("Resolved fields", value=report, height=560)
         st.download_button(
             "Download report .txt",

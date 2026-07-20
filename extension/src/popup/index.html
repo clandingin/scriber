@@ -35,6 +35,37 @@
       <label class="transcript-label" for="transcript">Transcript</label>
       <textarea id="transcript" class="transcript" readonly rows="12" placeholder="Transcript lines as A: (your mic) and B: (browser audio)…"></textarea>
 
+      <section class="note-toggle-row">
+        <button id="noteToggleBtn" type="button" class="btn">Note checkboxes</button>
+      </section>
+
+      <section id="notePanel" class="note-panel" hidden>
+        <p class="hint">
+          Resolves RADIO3 / MULTI_TAG / ROLLUP fields locally via the helper (same token).
+          Free-text and C-SSRS are skipped.
+        </p>
+        <label class="transcript-label" for="diagnosisInput">Diagnosis code + label</label>
+        <textarea
+          id="diagnosisInput"
+          class="diagnosis"
+          rows="2"
+          placeholder="e.g. F32.1 — Major depressive disorder, moderate"
+        ></textarea>
+        <div class="note-actions">
+          <button id="resolveNoteBtn" type="button" class="btn primary">Resolve checkboxes</button>
+          <button id="clearNoteBtn" type="button" class="btn">Clear report</button>
+          <button id="downloadNoteBtn" type="button" class="btn" disabled>Download report</button>
+        </div>
+        <label class="transcript-label" for="noteReport">Form answers</label>
+        <textarea
+          id="noteReport"
+          class="transcript note-report"
+          readonly
+          rows="14"
+          placeholder="Resolved checkbox fields will appear here…"
+        ></textarea>
+      </section>
+
       <details class="settings">
         <summary>Helper settings</summary>
         <p class="hint">

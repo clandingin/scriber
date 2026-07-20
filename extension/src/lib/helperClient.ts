@@ -204,3 +204,89 @@ export async function probeHelper(token: string, timeoutMs = 2000): Promise<bool
     });
   });
 }
+
+/**
+ * One-shot WebSocket call: resolve checkbox fields from a transcript via the
+ * local helper's note_resolver bridge.
+ */
+export async function resolveNoteViaHelper(
+  token: string,
+  transcript: string,
+  diagnosis: string,
+  options: { enableEmbeddings?: boolean; timeoutMs?: number } = {},
+): Promise<string> {
+  if (!token) {
+    throw new Error("Helper token missing. Paste the token in Helper settings.");
+  }
+  if (!transcript.trim()) {
+    throw new Error("No transcript to resolve. Start a session or paste A:/B: lines first.");
+  }
+
+  const timeoutMs = options.timeoutMs ?? 120_000;
+  const enableEmbeddings = options.enableEmbeddings ?? false;
+
+  return new Promise<string>((resolve, reject) => {
+    const url = new URL(HELPER_WS_BASE);
+    url.searchParams.set("token", token);
+    const ws = new WebSocket(url.toString());
+    let settled = false;
+    let intentionalClose = false;
+
+    const finish = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      intentionalClose = true;
+      try {
+        ws.close();
+      } catch {
+        /* ignore */
+      }
+      fn();
+    };
+
+    const timer = setTimeout(() => {
+      finish(() => reject(new Error("Note resolve timed out waiting for local helper")));
+    }, timeoutMs);
+
+    ws.addEventListener("open", () => {
+      ws.send(
+        JSON.stringify({
+          type: "resolve_note",
+          transcript,
+          diagnosis,
+          enableEmbeddings,
+        }),
+      );
+    });
+
+    ws.addEventListener("message", (ev) => {
+      if (typeof ev.data !== "string") return;
+      let msg: Record<string, unknown>;
+      try {
+        msg = JSON.parse(ev.data) as Record<string, unknown>;
+      } catch {
+        return;
+      }
+      if (msg.type === "hello") return;
+      if (msg.type === "note_resolved") {
+        finish(() => resolve(String(msg.report ?? "")));
+        return;
+      }
+      if (msg.type === "error") {
+        finish(() => reject(new Error(String(msg.message ?? "helper error"))));
+      }
+    });
+
+    ws.addEventListener("error", () => {
+      finish(() =>
+        reject(new Error("Unable to connect to local helper at 127.0.0.1:17341")),
+      );
+    });
+
+    ws.addEventListener("close", () => {
+      if (intentionalClose || settled) return;
+      finish(() => reject(new Error("Helper connection closed before note resolved")));
+    });
+  });
+}

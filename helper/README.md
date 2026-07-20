@@ -42,6 +42,23 @@ Connect URL shape:
 | `--device` | `cpu` | `cpu`, `cuda`, or `auto` |
 | `--compute-type` | `int8` | Use `float16` on CUDA if desired |
 
+## Note checkbox resolve
+
+With `note_resolver/` present next to `helper/` (or installed into the venv),
+the helper accepts a one-shot WebSocket JSON message:
+
+```json
+{"type":"resolve_note","transcript":"A: …\\nB: …","diagnosis":"F32.1 …","enableEmbeddings":false}
+```
+
+Response:
+
+```json
+{"type":"note_resolved","report":"…text form dump…","diagnosis":"…"}
+```
+
+The Chrome extension **Note checkboxes** panel uses this.
+
 ## Journals
 
 Finalized segments append under `%LOCALAPPDATA%\tab-transcriber\sessions\` for crash recovery during long calls.
