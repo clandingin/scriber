@@ -26,6 +26,10 @@ export interface SessionState {
   rtf: number | null;
   error: string | null;
   tabTitle: string | null;
+  diagnosis: string;
+  noteReport: string;
+  noteResolving: boolean;
+  notePanelOpen: boolean;
 }
 
 export const DEFAULT_STATE: SessionState = {
@@ -40,6 +44,10 @@ export const DEFAULT_STATE: SessionState = {
   rtf: null,
   error: null,
   tabTitle: null,
+  diagnosis: "",
+  noteReport: "",
+  noteResolving: false,
+  notePanelOpen: false,
 };
 
 export type PopupToBg =
@@ -48,11 +56,17 @@ export type PopupToBg =
   | { type: "STOP" }
   | { type: "CHECK_HELPER" }
   | { type: "CLEAR_TRANSCRIPT" }
-  | { type: "SET_TOKEN"; token: string };
+  | { type: "SET_TOKEN"; token: string }
+  | { type: "TOGGLE_NOTE_PANEL" }
+  | { type: "SET_DIAGNOSIS"; diagnosis: string }
+  | { type: "RESOLVE_NOTE"; diagnosis?: string; enableEmbeddings?: boolean }
+  | { type: "CLEAR_NOTE_REPORT" };
 
 export type BgToPopup =
   | { type: "STATE"; state: SessionState }
   | { type: "ERROR"; message: string };
+
+export const STORAGE_DIAGNOSIS_KEY = "noteDiagnosis";
 
 export type BgToOffscreen =
   | {

@@ -11,6 +11,7 @@ __pycache__/
 *.egg-info/
 helper/.token
 helper/.venv/
+note_resolver/.venv/
 **/.token
 sessions/
 extension/dist/
@@ -21,3 +22,4 @@ extension/dist/
 Sessions/
 *.onnx
 .cache/
+.streamlit/

@@ -1,6 +1,7 @@
 import {
   DEFAULT_STATE,
   HELPER_WS_BASE,
+  STORAGE_DIAGNOSIS_KEY,
   STORAGE_TOKEN_KEY,
   type BgToOffscreen,
   type BgToPopup,
@@ -8,7 +9,7 @@ import {
   type PopupToBg,
   type SessionState,
 } from "./lib/messages";
-import { probeHelper } from "./lib/helperClient";
+import { probeHelper, resolveNoteViaHelper } from "./lib/helperClient";
 
 let state: SessionState = { ...DEFAULT_STATE };
 let helperToken = "";
@@ -255,6 +256,7 @@ chrome.runtime.onMessage.addListener((message: PopupToBg | OffscreenToBg, _sende
         sessionId: null,
         startedAt: null,
         elapsedMs: 0,
+        noteReport: "",
       });
       sendResponse({ type: "STATE", state });
       return false;
@@ -264,6 +266,63 @@ chrome.runtime.onMessage.addListener((message: PopupToBg | OffscreenToBg, _sende
         void checkHelper().then(() => sendResponse({ type: "STATE", state }));
       });
       return true;
+    case "TOGGLE_NOTE_PANEL":
+      setState({ notePanelOpen: !state.notePanelOpen });
+      sendResponse({ type: "STATE", state });
+      return false;
+    case "SET_DIAGNOSIS":
+      setState({ diagnosis: popupMsg.diagnosis });
+      void chrome.storage.local.set({ [STORAGE_DIAGNOSIS_KEY]: popupMsg.diagnosis });
+      sendResponse({ type: "STATE", state });
+      return false;
+    case "CLEAR_NOTE_REPORT":
+      setState({ noteReport: "", error: null });
+      sendResponse({ type: "STATE", state });
+      return false;
+    case "RESOLVE_NOTE":
+      void (async () => {
+        await loadToken();
+        const diagnosis =
+          typeof popupMsg.diagnosis === "string" ? popupMsg.diagnosis : state.diagnosis;
+        setState({
+          diagnosis,
+          noteResolving: true,
+          notePanelOpen: true,
+          error: null,
+        });
+        void chrome.storage.local.set({ [STORAGE_DIAGNOSIS_KEY]: diagnosis });
+        try {
+          if (!helperToken) {
+            throw new Error(
+              "Helper token missing. Start the helper, then paste the token from helper/.token.",
+            );
+          }
+          const online = await probeHelper(helperToken);
+          if (!online) {
+            throw new Error(
+              "Local helper not reachable on 127.0.0.1:17341. Run start-helper.bat first.",
+            );
+          }
+          const report = await resolveNoteViaHelper(
+            helperToken,
+            state.transcript,
+            diagnosis,
+            { enableEmbeddings: Boolean(popupMsg.enableEmbeddings) },
+          );
+          setState({
+            noteReport: report,
+            noteResolving: false,
+            helperOnline: true,
+            error: null,
+          });
+          sendResponse({ type: "STATE", state });
+        } catch (err: unknown) {
+          const text = err instanceof Error ? err.message : String(err);
+          setState({ noteResolving: false, error: text });
+          sendResponse({ type: "ERROR", message: text });
+        }
+      })();
+      return true;
     default:
       return false;
   }
@@ -271,15 +330,23 @@ chrome.runtime.onMessage.addListener((message: PopupToBg | OffscreenToBg, _sende
 
 void (async () => {
   await loadToken();
+  const savedLocal = await chrome.storage.local.get(STORAGE_DIAGNOSIS_KEY);
+  if (typeof savedLocal[STORAGE_DIAGNOSIS_KEY] === "string") {
+    state = { ...state, diagnosis: savedLocal[STORAGE_DIAGNOSIS_KEY] };
+  }
   const saved = await chrome.storage.session.get("sessionState");
   if (saved.sessionState && typeof saved.sessionState === "object") {
     state = { ...DEFAULT_STATE, ...(saved.sessionState as SessionState) };
+    if (typeof savedLocal[STORAGE_DIAGNOSIS_KEY] === "string") {
+      state.diagnosis = savedLocal[STORAGE_DIAGNOSIS_KEY];
+    }
     if (state.status === "capturing" || state.status === "finalizing") {
       // Service worker restart mid-capture — mark error for user to restart
       state = {
         ...state,
         status: "error",
         error: "Extension restarted during capture. Press Start to begin a new session.",
+        noteResolving: false,
       };
     }
   }

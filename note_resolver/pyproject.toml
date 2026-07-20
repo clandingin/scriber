@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "note-resolver"
+version = "0.1.0"
+description = "Local checkbox field resolver for clinical session notes from A:/B: transcripts"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy>=1.26.0",
+  "sentence-transformers>=3.0.0",
+  "streamlit>=1.32.0",
+]
+
+[project.scripts]
+note-resolver = "note_resolver.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["note_resolver*"]
+
+[tool.setuptools.package-data]
+note_resolver = ["config/*.json"]

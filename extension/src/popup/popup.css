@@ -113,6 +113,63 @@ body {
   gap: 8px;
 }
 
+.note-toggle-row {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.note-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 253, 248, 0.85);
+}
+
+.note-panel[hidden] {
+  display: none;
+}
+
+.note-panel .hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.diagnosis {
+  width: 100%;
+  resize: vertical;
+  min-height: 52px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.note-actions {
+  display: grid;
+  grid-template-columns: 1.3fr 0.9fr 1.1fr;
+  gap: 6px;
+}
+
+.note-report {
+  font-family: "Cascadia Mono", "Consolas", monospace;
+  font-size: 0.72rem;
+  white-space: pre;
+}
+
+.btn.active {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .btn {
   border: 1px solid var(--line);
   background: var(--card);
