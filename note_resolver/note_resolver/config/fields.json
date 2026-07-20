@@ -1,0 +1,1057 @@
+{
+  "sections": [
+    {
+      "id": "substance_use",
+      "label": "Substance Use",
+      "fields": [
+        {
+          "id": "su_alcohol",
+          "label": "Alcohol",
+          "type": "RADIO3",
+          "keywords": [
+            "alcohol",
+            "drinking",
+            "beer",
+            "wine",
+            "liquor",
+            "etoh",
+            "drunk",
+            "intoxicated",
+            "no drugs",
+            "deny all",
+            "denies all",
+            "no drug use",
+            "don't do drugs",
+            "do not use drugs"
+          ]
+        },
+        {
+          "id": "su_tobacco",
+          "label": "Tobacco",
+          "type": "RADIO3",
+          "keywords": [
+            "tobacco",
+            "cigarette",
+            "cigarettes",
+            "smoking",
+            "smoke",
+            "nicotine",
+            "vape",
+            "vaping",
+            "cigar",
+            "no drugs",
+            "deny all",
+            "denies all",
+            "no drug use",
+            "don't do drugs",
+            "do not use drugs"
+          ]
+        },
+        {
+          "id": "su_cannabis",
+          "label": "Cannabis",
+          "type": "RADIO3",
+          "keywords": [
+            "cannabis",
+            "marijuana",
+            "weed",
+            "thc",
+            "pot",
+            "mj",
+            "no drugs",
+            "deny all",
+            "denies all",
+            "no drug use",
+            "don't do drugs",
+            "do not use drugs"
+          ]
+        },
+        {
+          "id": "su_cocaine",
+          "label": "Cocaine",
+          "type": "RADIO3",
+          "keywords": [
+            "cocaine",
+            "coke",
+            "crack",
+            "no drugs",
+            "deny all",
+            "denies all",
+            "no drug use",
+            "don't do drugs",
+            "do not use drugs"
+          ]
+        },
+        {
+          "id": "su_hallucinogens",
+          "label": "Hallucinogens",
+          "type": "RADIO3",
+          "keywords": [
+            "hallucinogen",
+            "hallucinogens",
+            "lsd",
+            "acid",
+            "mushroom",
+            "mushrooms",
+            "psilocybin",
+            "pcp",
+            "mdma",
+            "ecstasy",
+            "molly",
+            "no drugs",
+            "deny all",
+            "denies all",
+            "no drug use",
+            "don't do drugs",
+            "do not use drugs"
+          ]
+        },
+        {
+          "id": "su_opioids",
+          "label": "Opioids",
+          "type": "RADIO3",
+          "keywords": [
+            "opioid",
+            "opioids",
+            "heroin",
+            "fentanyl",
+            "oxycodone",
+            "oxycontin",
+            "percocet",
+            "hydrocodone",
+            "vicodin",
+            "morphine",
+            "methadone",
+            "suboxone",
+            "no drugs",
+            "deny all",
+            "denies all",
+            "no drug use",
+            "don't do drugs",
+            "do not use drugs"
+          ]
+        },
+        {
+          "id": "su_methamphetamine",
+          "label": "Methamphetamine",
+          "type": "RADIO3",
+          "keywords": [
+            "methamphetamine",
+            "meth",
+            "crystal meth",
+            "amphetamine",
+            "speed",
+            "adderall",
+            "no drugs",
+            "deny all",
+            "denies all",
+            "no drug use",
+            "don't do drugs",
+            "do not use drugs"
+          ]
+        },
+        {
+          "id": "su_other",
+          "label": "Other",
+          "type": "RADIO3",
+          "keywords": [
+            "other substance",
+            "other drug",
+            "benzodiazepine",
+            "benzo",
+            "xanax",
+            "valium",
+            "klonopin",
+            "inhalant",
+            "solvent",
+            "no drugs",
+            "deny all",
+            "denies all",
+            "no drug use",
+            "don't do drugs",
+            "do not use drugs"
+          ]
+        },
+        {
+          "id": "su_denies_all",
+          "label": "Denies all substance use",
+          "type": "ROLLUP",
+          "rule": "all_denies",
+          "children": [
+            "su_alcohol",
+            "su_tobacco",
+            "su_cannabis",
+            "su_cocaine",
+            "su_hallucinogens",
+            "su_opioids",
+            "su_methamphetamine",
+            "su_other"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "history_of_harm",
+      "label": "History of Harm",
+      "fields": [
+        {
+          "id": "hoh_suicidal_ideation",
+          "label": "Suicidal ideation",
+          "type": "RADIO3",
+          "keywords": [
+            "suicidal ideation",
+            "suicidal thoughts",
+            "thoughts of suicide",
+            "want to die",
+            "wish to die",
+            "si",
+            "kill myself",
+            "end my life"
+          ]
+        },
+        {
+          "id": "hoh_suicide_attempts",
+          "label": "Suicide attempts",
+          "type": "RADIO3",
+          "keywords": [
+            "suicide attempt",
+            "suicide attempts",
+            "attempted suicide",
+            "tried to kill",
+            "overdose attempt"
+          ]
+        },
+        {
+          "id": "hoh_self_harm",
+          "label": "Self-harm",
+          "type": "RADIO3",
+          "keywords": [
+            "self-harm",
+            "self harm",
+            "cutting",
+            "cut myself",
+            "nssi",
+            "self-injury",
+            "self injury"
+          ]
+        },
+        {
+          "id": "hoh_harm_to_others",
+          "label": "Harm to others",
+          "type": "RADIO3",
+          "keywords": [
+            "harm to others",
+            "hurt someone",
+            "hurt others",
+            "homicidal",
+            "kill someone",
+            "harm someone",
+            "harming others",
+            "thoughts of harming",
+            "hurt anybody",
+            "never hurt"
+          ]
+        },
+        {
+          "id": "hoh_violent_behavior",
+          "label": "Violent/destructive behavior",
+          "type": "RADIO3",
+          "keywords": [
+            "violent",
+            "violence",
+            "destructive",
+            "aggression",
+            "assault",
+            "fight",
+            "punched",
+            "hit someone",
+            "property damage"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "risk_assessment",
+      "label": "Risk Assessment",
+      "fields": [
+        {
+          "id": "risk_current",
+          "label": "Current risk indicators",
+          "type": "MULTI_TAG",
+          "default_tag": "none_endorsed",
+          "tags": [
+            {
+              "id": "none_endorsed",
+              "label": "None endorsed / not indicated",
+              "keywords": [
+                "no risk",
+                "denies risk",
+                "no suicidal",
+                "no current risk"
+              ]
+            },
+            {
+              "id": "wish_to_be_dead",
+              "label": "Wish to be dead",
+              "keywords": [
+                "wish to be dead",
+                "wish i were dead",
+                "better off dead",
+                "want to die",
+                "wish to die"
+              ]
+            },
+            {
+              "id": "ideation_without_intent",
+              "label": "Ideation without intent",
+              "keywords": [
+                "ideation without intent",
+                "thoughts but no intent",
+                "passive ideation",
+                "suicidal thoughts without plan"
+              ]
+            },
+            {
+              "id": "intent",
+              "label": "Intent",
+              "keywords": [
+                "intent to die",
+                "suicidal intent",
+                "intend to kill",
+                "going to kill myself"
+              ]
+            },
+            {
+              "id": "plan",
+              "label": "Plan",
+              "keywords": [
+                "suicide plan",
+                "plan to kill",
+                "have a plan",
+                "planned how"
+              ]
+            },
+            {
+              "id": "access_to_means",
+              "label": "Access to means",
+              "keywords": [
+                "access to means",
+                "have a gun",
+                "have pills",
+                "access to weapons",
+                "stockpile"
+              ]
+            },
+            {
+              "id": "other_risk",
+              "label": "Other",
+              "keywords": [
+                "other risk",
+                "additional risk"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "protective_factors",
+          "label": "Protective factors",
+          "type": "MULTI_TAG",
+          "default_tag": "none_identified",
+          "match_polarity": false,
+          "tags": [
+            {
+              "id": "none_identified",
+              "label": "None identified",
+              "keywords": []
+            },
+            {
+              "id": "family_support",
+              "label": "Family/social support",
+              "keywords": [
+                "family support",
+                "supportive family",
+                "friends support",
+                "social support",
+                "partner support",
+                "close to family",
+                "supportive",
+                "family is very supportive",
+                "supported by family",
+                "my family"
+              ]
+            },
+            {
+              "id": "engagement_treatment",
+              "label": "Engagement in treatment",
+              "keywords": [
+                "engaged in treatment",
+                "coming to therapy",
+                "taking medication",
+                "compliant",
+                "motivated for treatment"
+              ]
+            },
+            {
+              "id": "future_orientation",
+              "label": "Future orientation / reasons for living",
+              "keywords": [
+                "reasons for living",
+                "future plans",
+                "hopeful",
+                "looking forward",
+                "want to live",
+                "children depend"
+              ]
+            },
+            {
+              "id": "coping_skills",
+              "label": "Coping skills / problem solving",
+              "keywords": [
+                "coping skills",
+                "coping strategies",
+                "problem solving",
+                "uses skills",
+                "manages stress"
+              ]
+            },
+            {
+              "id": "spiritual_beliefs",
+              "label": "Spiritual / cultural beliefs",
+              "keywords": [
+                "faith",
+                "religion",
+                "spiritual",
+                "church",
+                "beliefs against suicide"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "risk_factors",
+          "label": "Risk factors",
+          "type": "MULTI_TAG",
+          "default_tag": "none_identified_rf",
+          "tags": [
+            {
+              "id": "none_identified_rf",
+              "label": "None identified",
+              "keywords": []
+            },
+            {
+              "id": "prior_attempts",
+              "label": "Prior suicide attempts",
+              "keywords": [
+                "prior attempt",
+                "previous attempt",
+                "history of attempt",
+                "past suicide attempt"
+              ]
+            },
+            {
+              "id": "substance_use_rf",
+              "label": "Active substance use",
+              "keywords": [
+                "drinking heavily",
+                "using drugs",
+                "intoxicated",
+                "substance use contributing"
+              ]
+            },
+            {
+              "id": "hopelessness",
+              "label": "Hopelessness",
+              "keywords": [
+                "hopeless",
+                "no hope",
+                "nothing will help",
+                "pointless"
+              ]
+            },
+            {
+              "id": "isolation",
+              "label": "Social isolation",
+              "keywords": [
+                "isolated",
+                "alone",
+                "no friends",
+                "no support",
+                "lonely"
+              ]
+            },
+            {
+              "id": "impulsivity",
+              "label": "Impulsivity",
+              "keywords": [
+                "impulsive",
+                "impulsivity",
+                "acts without thinking"
+              ]
+            },
+            {
+              "id": "recent_loss",
+              "label": "Recent loss / stressor",
+              "keywords": [
+                "lost job",
+                "breakup",
+                "divorce",
+                "death of",
+                "recent loss",
+                "evicted",
+                "financial stress"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mse",
+      "label": "Mental Status Exam",
+      "fields": [
+        {
+          "id": "mse_attention",
+          "label": "Attention",
+          "type": "MULTI_TAG",
+          "default_tag": "wnl",
+          "tags": [
+            {
+              "id": "wnl",
+              "label": "Within normal limits",
+              "keywords": [
+                "attention normal",
+                "attentive",
+                "good attention"
+              ]
+            },
+            {
+              "id": "distractible",
+              "label": "Distractible",
+              "keywords": [
+                "distractible",
+                "distracted",
+                "poor attention",
+                "inattentive",
+                "can't focus",
+                "difficulty focusing"
+              ]
+            },
+            {
+              "id": "hypervigilant",
+              "label": "Hypervigilant",
+              "keywords": [
+                "hypervigilant",
+                "on edge",
+                "scanning"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "mse_orientation",
+          "label": "Orientation",
+          "type": "MULTI_TAG",
+          "default_tag": "wnl",
+          "tags": [
+            {
+              "id": "wnl",
+              "label": "Oriented x3 / WNL",
+              "keywords": [
+                "oriented",
+                "orientation intact",
+                "oriented x3",
+                "oriented x4"
+              ]
+            },
+            {
+              "id": "disoriented_time",
+              "label": "Disoriented to time",
+              "keywords": [
+                "disoriented to time",
+                "not oriented to time",
+                "confused about date"
+              ]
+            },
+            {
+              "id": "disoriented_place",
+              "label": "Disoriented to place",
+              "keywords": [
+                "disoriented to place",
+                "not oriented to place"
+              ]
+            },
+            {
+              "id": "disoriented_person",
+              "label": "Disoriented to person",
+              "keywords": [
+                "disoriented to person",
+                "not oriented to person"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "mse_appearance",
+          "label": "Appearance",
+          "type": "MULTI_TAG",
+          "default_tag": "wnl",
+          "tags": [
+            {
+              "id": "wnl",
+              "label": "Within normal limits",
+              "keywords": [
+                "well groomed",
+                "neat appearance",
+                "appropriate appearance"
+              ]
+            },
+            {
+              "id": "disheveled",
+              "label": "Disheveled / unkempt",
+              "keywords": [
+                "disheveled",
+                "unkempt",
+                "poor hygiene",
+                "malodorous",
+                "dirty clothes"
+              ]
+            },
+            {
+              "id": "unusual_dress",
+              "label": "Unusual dress",
+              "keywords": [
+                "bizarre clothing",
+                "unusual dress",
+                "inappropriate clothing"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "mse_behavior",
+          "label": "Behavior",
+          "type": "MULTI_TAG",
+          "default_tag": "wnl",
+          "tags": [
+            {
+              "id": "wnl",
+              "label": "Within normal limits",
+              "keywords": [
+                "cooperative",
+                "calm behavior",
+                "appropriate behavior"
+              ]
+            },
+            {
+              "id": "agitated",
+              "label": "Agitated / restless",
+              "keywords": [
+                "agitated",
+                "restless",
+                "pacing",
+                "fidgety",
+                "psychomotor agitation"
+              ]
+            },
+            {
+              "id": "withdrawn",
+              "label": "Withdrawn / guarded",
+              "keywords": [
+                "withdrawn",
+                "guarded",
+                "uncooperative",
+                "avoidant"
+              ]
+            },
+            {
+              "id": "hostile",
+              "label": "Hostile / irritable",
+              "keywords": [
+                "hostile",
+                "irritable",
+                "angry demeanor",
+                "confrontational"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "mse_speech",
+          "label": "Speech",
+          "type": "MULTI_TAG",
+          "default_tag": "wnl",
+          "tags": [
+            {
+              "id": "wnl",
+              "label": "Within normal limits",
+              "keywords": [
+                "normal speech",
+                "speech normal",
+                "clear speech"
+              ]
+            },
+            {
+              "id": "pressured",
+              "label": "Pressured",
+              "keywords": [
+                "pressured speech",
+                "rapid speech",
+                "talking fast"
+              ]
+            },
+            {
+              "id": "slowed",
+              "label": "Slowed / soft",
+              "keywords": [
+                "slowed speech",
+                "soft speech",
+                "quiet speech",
+                "latency of speech",
+                "poverty of speech"
+              ]
+            },
+            {
+              "id": "tangential_speech",
+              "label": "Tangential / circumstantial",
+              "keywords": [
+                "tangential speech",
+                "circumstantial speech"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "mse_mood",
+          "label": "Mood",
+          "type": "MULTI_TAG",
+          "default_tag": "wnl",
+          "tags": [
+            {
+              "id": "wnl",
+              "label": "Euthymic / WNL",
+              "keywords": [
+                "euthymic",
+                "mood ok",
+                "feeling fine",
+                "mood normal",
+                "good mood"
+              ]
+            },
+            {
+              "id": "depressed",
+              "label": "Depressed / dysthymic",
+              "keywords": [
+                "depressed",
+                "sad",
+                "down",
+                "low mood",
+                "dysthymic",
+                "feeling blue"
+              ]
+            },
+            {
+              "id": "anxious_mood",
+              "label": "Anxious",
+              "keywords": [
+                "anxious",
+                "nervous",
+                "worried",
+                "on edge",
+                "panic"
+              ]
+            },
+            {
+              "id": "elevated",
+              "label": "Elevated / euphoric",
+              "keywords": [
+                "euphoric",
+                "elevated mood",
+                "manic",
+                "high mood"
+              ]
+            },
+            {
+              "id": "irritable_mood",
+              "label": "Irritable / angry",
+              "keywords": [
+                "irritable mood",
+                "angry",
+                "mad",
+                "frustrated"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "mse_affect",
+          "label": "Affect",
+          "type": "MULTI_TAG",
+          "default_tag": "wnl",
+          "tags": [
+            {
+              "id": "wnl",
+              "label": "Full / congruent / WNL",
+              "keywords": [
+                "affect full",
+                "congruent affect",
+                "appropriate affect",
+                "reactive affect"
+              ]
+            },
+            {
+              "id": "flat",
+              "label": "Flat / blunted",
+              "keywords": [
+                "flat affect",
+                "blunted affect",
+                "restricted affect"
+              ]
+            },
+            {
+              "id": "labile",
+              "label": "Labile",
+              "keywords": [
+                "labile affect",
+                "mood swings",
+                "tearful then laughing"
+              ]
+            },
+            {
+              "id": "incongruent",
+              "label": "Incongruent",
+              "keywords": [
+                "incongruent affect",
+                "inappropriate affect"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "mse_thought_process",
+          "label": "Thought process",
+          "type": "MULTI_TAG",
+          "default_tag": "wnl",
+          "tags": [
+            {
+              "id": "wnl",
+              "label": "Linear / goal-directed / WNL",
+              "keywords": [
+                "linear thought",
+                "goal directed",
+                "organized thinking",
+                "coherent"
+              ]
+            },
+            {
+              "id": "tangential",
+              "label": "Tangential / loose",
+              "keywords": [
+                "tangential",
+                "loose associations",
+                "derailment",
+                "flight of ideas"
+              ]
+            },
+            {
+              "id": "disorganized",
+              "label": "Disorganized / incoherent",
+              "keywords": [
+                "disorganized thought",
+                "incoherent",
+                "word salad",
+                "confused thinking"
+              ]
+            },
+            {
+              "id": "perseverative",
+              "label": "Perseverative",
+              "keywords": [
+                "perseverative",
+                "perseveration",
+                "stuck on"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "mse_thought_content",
+          "label": "Thought content",
+          "type": "MULTI_TAG",
+          "default_tag": "wnl",
+          "tags": [
+            {
+              "id": "wnl",
+              "label": "No delusions/obsessions / WNL",
+              "keywords": [
+                "no delusions",
+                "thought content normal",
+                "no psychosis"
+              ]
+            },
+            {
+              "id": "delusions",
+              "label": "Delusions",
+              "keywords": [
+                "delusion",
+                "delusional",
+                "paranoid",
+                "paranoia",
+                "being watched",
+                "conspiracy"
+              ]
+            },
+            {
+              "id": "hallucinations",
+              "label": "Hallucinations",
+              "keywords": [
+                "hallucination",
+                "hearing voices",
+                "seeing things",
+                "auditory hallucination",
+                "visual hallucination"
+              ]
+            },
+            {
+              "id": "obsessions",
+              "label": "Obsessions / ruminations",
+              "keywords": [
+                "obsession",
+                "obsessive",
+                "rumination",
+                "can't stop thinking"
+              ]
+            },
+            {
+              "id": "si_content",
+              "label": "Suicidal content",
+              "keywords": [
+                "suicidal thoughts",
+                "thoughts of suicide"
+              ]
+            },
+            {
+              "id": "hi_content",
+              "label": "Homicidal content",
+              "keywords": [
+                "homicidal thoughts",
+                "thoughts of harming others"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "mse_memory",
+          "label": "Memory",
+          "type": "MULTI_TAG",
+          "default_tag": "wnl",
+          "tags": [
+            {
+              "id": "wnl",
+              "label": "Intact / WNL",
+              "keywords": [
+                "memory intact",
+                "memory normal",
+                "good memory"
+              ]
+            },
+            {
+              "id": "short_term_impaired",
+              "label": "Short-term impaired",
+              "keywords": [
+                "short-term memory",
+                "forgetful",
+                "can't remember recent",
+                "memory problems"
+              ]
+            },
+            {
+              "id": "long_term_impaired",
+              "label": "Long-term impaired",
+              "keywords": [
+                "long-term memory",
+                "can't remember past"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "mse_judgement",
+          "label": "Judgement",
+          "type": "MULTI_TAG",
+          "default_tag": "wnl",
+          "tags": [
+            {
+              "id": "wnl",
+              "label": "Good / fair / WNL",
+              "keywords": [
+                "good judgement",
+                "fair judgement",
+                "judgment intact",
+                "sound judgment"
+              ]
+            },
+            {
+              "id": "impaired",
+              "label": "Impaired / poor",
+              "keywords": [
+                "poor judgement",
+                "impaired judgement",
+                "bad decisions",
+                "poor judgment"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "mse_insight",
+          "label": "Insight",
+          "type": "MULTI_TAG",
+          "default_tag": "wnl",
+          "tags": [
+            {
+              "id": "wnl",
+              "label": "Good / fair / WNL",
+              "keywords": [
+                "good insight",
+                "fair insight",
+                "insight intact",
+                "understands illness"
+              ]
+            },
+            {
+              "id": "limited",
+              "label": "Limited / poor",
+              "keywords": [
+                "poor insight",
+                "limited insight",
+                "no insight",
+                "doesn't recognize",
+                "denies illness"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "mse_all_wnl",
+          "label": "Patient is within normal limits on all factors",
+          "type": "ROLLUP",
+          "rule": "all_default_only",
+          "children": [
+            "mse_attention",
+            "mse_orientation",
+            "mse_appearance",
+            "mse_behavior",
+            "mse_speech",
+            "mse_mood",
+            "mse_affect",
+            "mse_thought_process",
+            "mse_thought_content",
+            "mse_memory",
+            "mse_judgement",
+            "mse_insight"
+          ]
+        }
+      ]
+    }
+  ]
+}

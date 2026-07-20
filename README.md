@@ -53,6 +53,7 @@ npm run build
 tab-transcriber/
   extension/     Chrome MV3 + Vite + @crxjs/vite-plugin
   helper/        Python faster-whisper WebSocket service
+  note_resolver/ Local checkbox resolver for clinical session notes (A:/B: transcript → form fields)
   README.md
 ```
 
