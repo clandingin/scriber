@@ -46,6 +46,8 @@ npm run build
    B: what played in the browser tab
    ```
 5. Click **Stop**, then **Download .txt**
+5. Optional: click **Note checkboxes**, enter a diagnosis, **Resolve checkboxes** — the local helper fills RADIO3/MULTI_TAG/ROLLUP fields and shows a text form dump in the popup
+
 
 ## Project layout
 
@@ -53,6 +55,7 @@ npm run build
 tab-transcriber/
   extension/     Chrome MV3 + Vite + @crxjs/vite-plugin
   helper/        Python faster-whisper WebSocket service
+  note_resolver/ Local checkbox resolver for clinical session notes (A:/B: transcript → form fields)
   README.md
 ```
 

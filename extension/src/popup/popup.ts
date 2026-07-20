@@ -21,8 +21,17 @@ const saveTokenBtn = document.getElementById("saveTokenBtn") as HTMLButtonElemen
 const checkHelperBtn = document.getElementById("checkHelperBtn") as HTMLButtonElement;
 const clearBtn = document.getElementById("clearBtn") as HTMLButtonElement;
 
+const noteToggleBtn = document.getElementById("noteToggleBtn") as HTMLButtonElement;
+const notePanel = document.getElementById("notePanel") as HTMLElement;
+const diagnosisInput = document.getElementById("diagnosisInput") as HTMLTextAreaElement;
+const resolveNoteBtn = document.getElementById("resolveNoteBtn") as HTMLButtonElement;
+const clearNoteBtn = document.getElementById("clearNoteBtn") as HTMLButtonElement;
+const downloadNoteBtn = document.getElementById("downloadNoteBtn") as HTMLButtonElement;
+const noteReportEl = document.getElementById("noteReport") as HTMLTextAreaElement;
+
 let state: SessionState = { ...DEFAULT_STATE };
 let tickTimer: ReturnType<typeof setInterval> | null = null;
+let diagnosisSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
 function send<T extends BgToPopup>(msg: PopupToBg): Promise<T> {
   return chrome.runtime.sendMessage(msg) as Promise<T>;
@@ -87,6 +96,19 @@ function render(): void {
   rtfEl.textContent = state.rtf != null ? `RTF ${state.rtf.toFixed(2)}` : "";
   lagEl.textContent = state.lagging ? "Helper lagging — dropping quiet audio" : "";
 
+  notePanel.hidden = !state.notePanelOpen;
+  noteToggleBtn.classList.toggle("active", state.notePanelOpen);
+  noteToggleBtn.textContent = state.notePanelOpen ? "Hide note checkboxes" : "Note checkboxes";
+
+  if (document.activeElement !== diagnosisInput) {
+    diagnosisInput.value = state.diagnosis;
+  }
+  noteReportEl.value = state.noteReport;
+  resolveNoteBtn.disabled = state.noteResolving || !state.transcript.trim();
+  resolveNoteBtn.textContent = state.noteResolving ? "Resolving…" : "Resolve checkboxes";
+  downloadNoteBtn.disabled = !state.noteReport.trim();
+  clearNoteBtn.disabled = state.noteResolving;
+
   if (state.status === "capturing" && !tickTimer) {
     tickTimer = setInterval(() => render(), 500);
   } else if (state.status !== "capturing" && tickTimer) {
@@ -100,13 +122,13 @@ function applyState(next: SessionState): void {
   render();
 }
 
-function downloadTranscript(): void {
-  const text = state.transcript.trim();
-  if (!text) return;
+function downloadText(filenamePrefix: string, text: string): void {
+  const trimmed = text.trim();
+  if (!trimmed) return;
   const now = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
-  const name = `transcript-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.txt`;
-  const blob = new Blob([text + "\n"], { type: "text/plain;charset=utf-8" });
+  const name = `${filenamePrefix}-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.txt`;
+  const blob = new Blob([trimmed + "\n"], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -152,7 +174,7 @@ stopBtn.addEventListener("click", () => {
   });
 });
 
-downloadBtn.addEventListener("click", () => downloadTranscript());
+downloadBtn.addEventListener("click", () => downloadText("transcript", state.transcript));
 
 clearBtn.addEventListener("click", () => {
   void send({ type: "CLEAR_TRANSCRIPT" }).then((res) => {
@@ -172,6 +194,43 @@ saveTokenBtn.addEventListener("click", () => {
     if (res.type === "STATE") applyState(res.state);
   });
 });
+
+noteToggleBtn.addEventListener("click", () => {
+  void send({ type: "TOGGLE_NOTE_PANEL" }).then((res) => {
+    if (res.type === "STATE") applyState(res.state);
+  });
+});
+
+diagnosisInput.addEventListener("input", () => {
+  if (diagnosisSaveTimer) clearTimeout(diagnosisSaveTimer);
+  diagnosisSaveTimer = setTimeout(() => {
+    void send({ type: "SET_DIAGNOSIS", diagnosis: diagnosisInput.value });
+  }, 300);
+});
+
+resolveNoteBtn.addEventListener("click", () => {
+  void send({
+    type: "RESOLVE_NOTE",
+    diagnosis: diagnosisInput.value,
+    enableEmbeddings: false,
+  }).then((res) => {
+    if (res.type === "STATE") applyState(res.state);
+    if (res.type === "ERROR") {
+      errorEl.hidden = false;
+      errorEl.textContent = res.message;
+      resolveNoteBtn.disabled = false;
+      resolveNoteBtn.textContent = "Resolve checkboxes";
+    }
+  });
+});
+
+clearNoteBtn.addEventListener("click", () => {
+  void send({ type: "CLEAR_NOTE_REPORT" }).then((res) => {
+    if (res.type === "STATE") applyState(res.state);
+  });
+});
+
+downloadNoteBtn.addEventListener("click", () => downloadText("note-checkboxes", state.noteReport));
 
 chrome.runtime.onMessage.addListener((message: BgToPopup) => {
   if (message?.type === "STATE") {
